@@ -3,13 +3,15 @@ using Fusion;
 
 public class PlayerSpawner : SimulationBehaviour, IPlayerJoined
 {
-    [SerializeField] private GameObject _playerPrefab;
+    [SerializeField] private NetworkPrefabRef _playerPrefab;
+   
+    //Este método se ejecuta cada vez que un nuevo usuario entra
     public void PlayerJoined(PlayerRef player)
     {
         //Pregunta si el cliente que entro es el mismo que esta en esta computadora
         if (player == Runner.LocalPlayer)
         {
-            //Crea el player de cada jugador en la red
+            //Se debe spawnear el player de cada jugador en la red
             Runner.Spawn(_playerPrefab);
         }
     }
