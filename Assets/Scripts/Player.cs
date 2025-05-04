@@ -22,6 +22,14 @@ public class Player : NetworkBehaviour, IDamageable
     [SerializeField] private NetworkPrefabRef _bulletPrefab;
     [SerializeField] Transform _spawnTransform;
 
+    [Header("Force")]
+    [SerializeField] private bool _canUseForce = true;
+    [SerializeField] private bool _forceActivate;
+    [SerializeField] private float _lifeTimeForce;
+    [SerializeField] private float _lifeTimeForceCount;
+    [SerializeField] private GameObject _force;
+    [SerializeField] private Material _material;
+
     [Header("UI")]
     [SerializeField] private RawImage _barLife;
 
@@ -41,6 +49,25 @@ public class Player : NetworkBehaviour, IDamageable
         _animator.SetFloat("LastZ", _zAxis);
 
         if (Input.GetKeyDown(KeyCode.Space)) _ShootBulletActivate = true;
+
+        if (Input.GetKeyDown(KeyCode.Alpha1) && _canUseForce)
+        {
+            _force.SetActive(true);
+            _canUseForce = false;
+            _forceActivate = true;
+        }
+
+        if (_forceActivate)
+        {
+            _lifeTimeForceCount += Time.deltaTime;
+            _material.SetFloat("_Disolve", _lifeTimeForceCount / _lifeTimeForce);
+
+            if (_lifeTimeForceCount >= _lifeTimeForce * 0.6f)
+            {
+                _forceActivate = false;
+                _force.SetActive(false);
+            }
+        }
     }
 
     public override void FixedUpdateNetwork()
@@ -56,10 +83,6 @@ public class Player : NetworkBehaviour, IDamageable
         Runner.Spawn(_bulletPrefab, _spawnTransform.position, transform.rotation);
         _ShootBulletActivate = false;
     }
-
-   
-
-    
 
     private void MovementPlayer()
     {
@@ -91,6 +114,7 @@ public class Player : NetworkBehaviour, IDamageable
     public void RPC_TakeDamage(float damage)
     {
         if (!Object.HasStateAuthority) return;
+        if (_forceActivate) return;
 
         _currentHealth -= damage;
         BarLife(_currentHealth);
