@@ -31,6 +31,8 @@ public class GameManager : MonoBehaviour
         if (position.z > height) position.z = -height;
         if (position.z < -height) position.z = height;
 
+        position.y = 0;
+
         return position;
     }
 

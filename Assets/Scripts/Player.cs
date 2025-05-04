@@ -11,6 +11,7 @@ public class Player : NetworkBehaviour, IDamageable
     [SerializeField] private float _speed;
     [SerializeField] private float _speedRotation;
     NetworkRigidbody3D _netRB;
+    [SerializeField] private Animator _animator;
 
 
     [SerializeField] private float _xAxis;
@@ -23,12 +24,21 @@ public class Player : NetworkBehaviour, IDamageable
 
     [Header("UI")]
     [SerializeField] private RawImage _barLife;
-    
+
+    public override void Spawned()
+    {
+        if (!HasStateAuthority) return;
+        _netRB = GetComponent<NetworkRigidbody3D>();
+        _currentHealth = _maxHealth;
+    }
+
     void Update()
     {
         if (!HasStateAuthority) return;
         _xAxis = Input.GetAxis("Horizontal");
         _zAxis = Input.GetAxis("Vertical");
+        _animator.SetFloat("LastX", _xAxis);
+        _animator.SetFloat("LastZ", _zAxis);
 
         if (Input.GetKeyDown(KeyCode.Space)) _ShootBulletActivate = true;
     }
@@ -37,6 +47,7 @@ public class Player : NetworkBehaviour, IDamageable
     {
         MovementPlayer();
         RotationPlayer();
+        transform.position = GameManager.Intance.AjustPositionToBounds(transform.position);
         if (_ShootBulletActivate) SpawnBullet();
     }
 
@@ -46,12 +57,7 @@ public class Player : NetworkBehaviour, IDamageable
         _ShootBulletActivate = false;
     }
 
-    public override void Spawned()
-    {
-        if (!HasStateAuthority) return;
-        _netRB = GetComponent<NetworkRigidbody3D>();
-        _currentHealth = _maxHealth;
-    }
+   
 
     
 

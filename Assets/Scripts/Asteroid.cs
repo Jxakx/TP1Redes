@@ -20,10 +20,10 @@ public class Asteroid : NetworkBehaviour, IDamageable
     {
         _netRB = GetComponent<NetworkRigidbody3D>();
         _direction = new Vector3(UnityEngine.Random.Range(-7f, 7f), 0, UnityEngine.Random.Range(-7f, 7f));
-        _force = UnityEngine.Random.Range(0.1f, 5);
-        _speedRotationX = UnityEngine.Random.Range(50, 200);
-        _speedRotationY = UnityEngine.Random.Range(50, 200);
-        _speedRotationZ = UnityEngine.Random.Range(50, 200);
+        _force = UnityEngine.Random.Range(0.1f, 15);
+        _speedRotationX = UnityEngine.Random.Range(20, 100);
+        _speedRotationY = UnityEngine.Random.Range(20, 100);
+        _speedRotationZ = UnityEngine.Random.Range(20, 100);
         _netRB.Rigidbody.AddForce(_direction.normalized * _force, ForceMode.VelocityChange);
     }
 
