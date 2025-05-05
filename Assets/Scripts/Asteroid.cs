@@ -29,11 +29,11 @@ public class Asteroid : NetworkBehaviour, IDamageable
 
     public override void FixedUpdateNetwork()
     {
-        RotationPlayer();
-        transform.position = GameManager.Intance.AjustPositionToBounds(transform.position);
+        RotationAsteroid();
+        transform.position = GameManager.Instance.AjustPositionToBounds(transform.position);
     }
 
-    private void RotationPlayer()
+    private void RotationAsteroid()
     {
         float rotationAmountX = _speedRotationX * Runner.DeltaTime;
         float rotationAmountY = _speedRotationY * Runner.DeltaTime;

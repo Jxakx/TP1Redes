@@ -2,6 +2,7 @@ using UnityEngine;
 using Fusion;
 using Fusion.Addons.Physics;
 using UnityEngine.UI;
+using System;
 
 public class Player : NetworkBehaviour, IDamageable
 {
@@ -12,6 +13,8 @@ public class Player : NetworkBehaviour, IDamageable
     [SerializeField] private float _speedRotation;
     NetworkRigidbody3D _netRB;
     [SerializeField] private Animator _animator;
+    public MeshRenderer _myAlas;
+    public MeshRenderer _myCamina;
 
 
     [SerializeField] private float _xAxis;
@@ -38,7 +41,9 @@ public class Player : NetworkBehaviour, IDamageable
         if (!HasStateAuthority) return;
         _netRB = GetComponent<NetworkRigidbody3D>();
         _currentHealth = _maxHealth;
+        GameManager.Instance.AddToList(this);
     }
+
 
     void Update()
     {
@@ -52,29 +57,45 @@ public class Player : NetworkBehaviour, IDamageable
 
         if (Input.GetKeyDown(KeyCode.Alpha1) && _canUseForce)
         {
-            _force.SetActive(true);
-            _canUseForce = false;
-            _forceActivate = true;
+            RPC_ForceActivate();
         }
 
         if (_forceActivate)
         {
             _lifeTimeForceCount += Time.deltaTime;
-            _material.SetFloat("_Disolve", _lifeTimeForceCount / _lifeTimeForce);
+            if (_lifeTimeForceCount / _lifeTimeForce >= 0.4f)
+            {
+                _material.SetFloat("_Disolve", _lifeTimeForceCount / _lifeTimeForce);
+            }
 
             if (_lifeTimeForceCount >= _lifeTimeForce * 0.6f)
             {
-                _forceActivate = false;
-                _force.SetActive(false);
+                RPC_ForceDesactivate();
             }
         }
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    public void RPC_ForceActivate()
+    {
+        _material.SetFloat("_Disolve", 0.4f);
+        _force.SetActive(true);
+        _canUseForce = false;
+        _forceActivate = true;
+    }
+
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    public void RPC_ForceDesactivate()
+    {
+        _forceActivate = false;
+        _force.SetActive(false);
     }
 
     public override void FixedUpdateNetwork()
     {
         MovementPlayer();
         RotationPlayer();
-        transform.position = GameManager.Intance.AjustPositionToBounds(transform.position);
+        transform.position = GameManager.Instance.AjustPositionToBounds(transform.position);
         if (_ShootBulletActivate) SpawnBullet();
     }
 
@@ -117,7 +138,7 @@ public class Player : NetworkBehaviour, IDamageable
         if (_forceActivate) return;
 
         _currentHealth -= damage;
-        BarLife(_currentHealth);
+        RPC_BarLife(_currentHealth);
 
         if (_currentHealth <= 0)
         {
@@ -127,10 +148,12 @@ public class Player : NetworkBehaviour, IDamageable
 
     private void Death()
     {
+        GameManager.Instance.RPC_Defeat(Runner.LocalPlayer);
         Destroy(gameObject);
     }
 
-    private void BarLife(float health)
+    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+    private void RPC_BarLife(float health)
     {
         _barLife.rectTransform.localScale = new Vector3(health / _maxHealth, 1, 1);
     }

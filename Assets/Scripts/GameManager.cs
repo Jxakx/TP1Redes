@@ -1,23 +1,81 @@
+using Fusion;
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 
-public class GameManager : MonoBehaviour
+public class GameManager : NetworkBehaviour
 {
-    public static GameManager Intance;
+    public static GameManager Instance { get; private set; }
 
     [SerializeField] private float _boundsWith, _boundsHeight;
+    public Material _alas;
+    public Material _cabina;
 
+    [SerializeField] private GameObject _ganar;
+    [SerializeField] private GameObject _perder;
+
+    [SerializeField] private List<PlayerRef> _clients;
+
+    [SerializeField] public int index = 0;
     private void Awake()
     {
-        if (Intance == null)
+        if (Instance == null)
         {
-            Intance = this;
+            Instance = this;
+            _clients = new List<PlayerRef>();
         }
-        else
+    }
+
+    public void AddToList(Player player)
+    {
+        var playerRef = player.Object.StateAuthority;
+        if (_clients.Contains(playerRef)) return;
+
+        _clients.Add(playerRef);
+    }
+
+    public void RemoveFromList(PlayerRef client)
+    {
+        _clients.Remove(client);
+    }
+
+    [Rpc]
+    public void RPC_Defeat(PlayerRef client)
+    {
+        if (client == Runner.LocalPlayer)
         {
-            Destroy(this);
+            RPC_Lose(client);
         }
+
+        _clients.Remove(client);
+
+        if (_clients.Count == 1 && HasStateAuthority)
+        {
+            RPC_Win(_clients[0]);
+        }
+    }
+
+    [Rpc]
+    void RPC_Win([RpcTarget]PlayerRef client)
+    {
+        ShowWin();
+    }
+
+    [Rpc]
+    void RPC_Lose(PlayerRef client)
+    {
+        ShowLose();
+    }
+
+    private void ShowWin()
+    {
+        _ganar.SetActive(true);
+    }
+
+    private void ShowLose()
+    {
+        _perder.SetActive(true);
     }
 
     public Vector3 AjustPositionToBounds(Vector3 position)
