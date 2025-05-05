@@ -48,8 +48,8 @@ Material:
     - _CastShadows: 1
     - _Cull: 2
     - _DstBlend: 10
-    - _IntensidadDelNe_n: 4.98
-    - _IntensidadNe_n: 1.62
+    - _IntensidadDelNe_n: 5
+    - _IntensidadNe_n: 5
     - _QueueControl: 0
     - _QueueOffset: 0
     - _ReceiveShadows: 1
@@ -61,8 +61,8 @@ Material:
     - _ZWriteControl: 0
     m_Colors:
     - _ColorBase: {r: 0, g: 0, b: 0, a: 0}
-    - _ColorEfecto: {r: 0.7294645, g: 0.8773585, b: 0.062077243, a: 0}
-    - _ColorNe_n: {r: 0.7181846, g: 0.8207547, b: 0.10453009, a: 0}
+    - _ColorEfecto: {r: 0, g: 0.5119045, b: 1, a: 0}
+    - _ColorNe_n: {r: 0, g: 1, b: 0.9712162, a: 0}
   m_BuildTextureStacks: []
 --- !u!114 &6452092377448048193
 MonoBehaviour:
