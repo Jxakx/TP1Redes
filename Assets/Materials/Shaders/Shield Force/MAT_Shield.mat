@@ -62,7 +62,7 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Ints: []
     m_Floats:
-    - _Disolve: 0.6000666
+    - _Disolve: 0.6001452
     - _Distortien_power: -0.17
     - _Fresnel_power: 2.45
     - _QueueControl: 0
