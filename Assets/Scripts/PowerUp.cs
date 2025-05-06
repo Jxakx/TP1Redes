@@ -1,26 +1,39 @@
 using Fusion;
 using UnityEngine;
+using Fusion.Addons.Physics;
 
+[RequireComponent(typeof(Collider), typeof(NetworkRigidbody3D))]
 public class PowerUp : NetworkBehaviour
 {
     [Header("Configuración PowerUp")]
-    [SerializeField] private float _powerUpDuration = 5f;    // Duración del efecto en el jugador
-    [SerializeField] private float _lifeTime = 10f;         // Tiempo total de vida del power-up
-    [SerializeField] private float _blinkStartTime = 3f;    // Cuándo empieza a parpadear antes de desaparecer
-    [SerializeField] private float _blinkSpeed = 5f;        // Velocidad del parpadeo
+    [SerializeField] private float _powerUpDuration = 5f;
+    [SerializeField] private float _lifeTime = 10f;
+    [SerializeField] private float _blinkStartTime = 3f;
+    [SerializeField] private float _blinkSpeed = 5f;
 
     [Header("Referencias")]
-    [SerializeField] private Renderer _renderer;            // Componente de renderizado
-    [SerializeField] private Collider _collider;           // Collider para desactivar durante parpadeo
+    [SerializeField] private Renderer _renderer;
+    [SerializeField] private Collider _collider;
 
+    private NetworkRigidbody3D _netRB;
+    private Rigidbody _rb;
     private TickTimer _lifeTimer;
     private bool _isBlinking = false;
 
     public override void Spawned()
     {
-        // Obtener referencias si no están asignadas
+        // Obtener referencias
         if (_renderer == null) _renderer = GetComponentInChildren<Renderer>();
         if (_collider == null) _collider = GetComponent<Collider>();
+        _netRB = GetComponent<NetworkRigidbody3D>();
+        _rb = _netRB.Rigidbody;
+
+        // Desactivar gravedad y físicas externas
+        if (_rb != null)
+        {
+            _rb.useGravity = false;
+            _rb.isKinematic = true;
+        }
 
         if (HasStateAuthority)
         {
@@ -30,9 +43,9 @@ public class PowerUp : NetworkBehaviour
 
     public override void FixedUpdateNetwork()
     {
-        if (!HasStateAuthority) return;
+        if (!HasStateAuthority)
+            return;
 
-        // Auto-destrucción si no es recolectado a tiempo
         if (_lifeTimer.Expired(Runner))
         {
             Runner.Despawn(Object);
@@ -41,67 +54,45 @@ public class PowerUp : NetworkBehaviour
 
     private void Update()
     {
-        // Sistema de parpadeo visual (solo en clientes)
-        if (_renderer != null && HasStateAuthority)
+        if (!HasStateAuthority || _renderer == null)
+            return;
+
+        float remaining = _lifeTimer.RemainingTime(Runner) ?? 0f;
+        if (remaining <= _blinkStartTime && !_isBlinking)
+            _isBlinking = true;
+
+        if (_isBlinking)
         {
-            float remainingTime = _lifeTimer.RemainingTime(Runner) ?? 0f;
-
-            // Activar parpadeo cuando queda poco tiempo
-            if (remainingTime <= _blinkStartTime && !_isBlinking)
-            {
-                _isBlinking = true;
-            }
-
-            // Efecto de parpadeo
-            if (_isBlinking)
-            {
-                float blinkValue = Mathf.Sin(Time.time * _blinkSpeed);
-                _renderer.enabled = blinkValue > 0;
-
-                // Opcional: Desactivar collider durante parpadeo para evitar últimos-momentos
-                if (_collider != null)
-                    _collider.enabled = blinkValue > 0.5f;
-            }
+            float val = Mathf.Sin(Time.time * _blinkSpeed);
+            _renderer.enabled = val > 0;
+            if (_collider != null)
+                _collider.enabled = val > 0.5f;
         }
     }
 
     private void OnTriggerEnter(Collider other)
     {
-        if (other.TryGetComponent(out Player player))
-        {
-            // Aplicar efecto al jugador
-            player.RPC_ActivateDoubleShot(_powerUpDuration);
+        if (!HasStateAuthority) return;
 
-            // Solo la autoridad despawnea el objeto
-            if (HasStateAuthority)
-            {
-                Runner.Despawn(Object);
-            }
+        if (other.TryGetComponent<Player>(out var player))
+        {
+            player.RPC_ActivateDoubleShot(_powerUpDuration);
+            Runner.Despawn(Object);
+            
         }
     }
 
     private void OnDrawGizmos()
     {
         Gizmos.DrawWireSphere(transform.position, 0.7f);
-
-        // Mostrar área de influencia
-        if (_collider != null)
-        {
-            if (_collider is SphereCollider sphere)
-            {
-                Gizmos.DrawSphere(transform.position, sphere.radius);
-            }
-            else if (_collider is BoxCollider box)
-            {
-                Gizmos.DrawCube(transform.position + box.center, box.size);
-            }
-        }
+        if (_collider is SphereCollider sphere)
+            Gizmos.DrawSphere(transform.position, sphere.radius);
+        else if (_collider is BoxCollider box)
+            Gizmos.DrawCube(transform.position + box.center, box.size);
     }
 
-    // Reset para el Inspector
     private void Reset()
     {
-        // Valores por defecto
         _powerUpDuration = 5f;
         _lifeTime = 10f;
         _blinkStartTime = 3f;
