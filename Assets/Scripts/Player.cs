@@ -1,4 +1,4 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 using Fusion;
 using Fusion.Addons.Physics;
 using UnityEngine.UI;
@@ -34,8 +34,9 @@ public class Player : NetworkBehaviour, IDamageable
     [SerializeField] private Transform _spawnTransform;
     [SerializeField] private Transform _spawnTransformLeft;
     [SerializeField] private Transform _spawnTransformRight;
-    [Networked] private bool _doubleShotActive { get; set; }
-    [Networked] private TickTimer _doubleShotTimer { get; set; }
+    [SerializeField] private bool _doubleShotActive { get; set; }
+    [SerializeField] private TickTimer _doubleShotTimer { get; set; }
+    public bool _borrar;
 
     [Header("Force Field")]
     [SerializeField] private bool _canUseForce = true;
@@ -75,7 +76,6 @@ public class Player : NetworkBehaviour, IDamageable
 
     private void HandleInput()
     {
-        // Movimiento básico
         _xAxis = Input.GetAxis("Horizontal");
         _zAxis = Input.GetAxis("Vertical");
         _animator.SetFloat("LastX", _xAxis);
@@ -91,16 +91,14 @@ public class Player : NetworkBehaviour, IDamageable
 
         // Campo de fuerza
         if (Input.GetKeyDown(KeyCode.Alpha1) && _canUseForce)
-        {
             RPC_ForceActivate();
-        }
 
         UpdateForceField();
     }
 
     private void TryDash()
     {
-        if (_xAxis != 0 || _zAxis != 0) // Solo dash si hay input
+        if (_xAxis != 0 || _zAxis != 0)
         {
             _isDashing = true;
             _isInvulnerable = true;
@@ -115,26 +113,22 @@ public class Player : NetworkBehaviour, IDamageable
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
     private void RPC_PlayDashEffects()
     {
-        if (_dashParticles != null)
-            _dashParticles.Play();
-
-        if (_dashTrail != null)
-            _dashTrail.emitting = true;
+        if (_dashParticles != null) _dashParticles.Play();
+        if (_dashTrail != null) _dashTrail.emitting = true;
     }
 
     [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
     private void RPC_StopDashEffects()
     {
-        if (_dashTrail != null)
-            _dashTrail.emitting = false;
+        if (_dashTrail != null) _dashTrail.emitting = false;
     }
 
     private void UpdateDashCooldownUI()
     {
         if (_dashCooldownUI != null)
         {
-            float cooldownProgress = _dashCooldownTimer.RemainingTime(Runner) ?? 0f;
-            _dashCooldownUI.fillAmount = 1 - (cooldownProgress / _dashCooldown);
+            float remaining = _dashCooldownTimer.RemainingTime(Runner) ?? 0f;
+            _dashCooldownUI.fillAmount = 1 - (remaining / _dashCooldown);
         }
     }
 
@@ -144,23 +138,17 @@ public class Player : NetworkBehaviour, IDamageable
         {
             _lifeTimeForceCount += Time.deltaTime;
             if (_lifeTimeForceCount / _lifeTimeForce >= 0.4f)
-            {
                 _material.SetFloat("_Disolve", _lifeTimeForceCount / _lifeTimeForce);
-            }
 
             if (_lifeTimeForceCount >= _lifeTimeForce * 0.6f)
-            {
                 RPC_ForceDesactivate();
-            }
         }
     }
 
     public override void FixedUpdateNetwork()
     {
         if (_isDashing)
-        {
             HandleDash();
-        }
         else
         {
             MovementPlayer();
@@ -170,19 +158,17 @@ public class Player : NetworkBehaviour, IDamageable
         HandleShooting();
         CheckTimers();
         ClampPosition();
+        _borrar = _doubleShotActive;
     }
 
     private void HandleDash()
     {
-        Vector3 dashDirection = transform.forward;
-        if (_xAxis != 0 || _zAxis != 0)
-        {
-            dashDirection = new Vector3(_xAxis, 0, _zAxis).normalized;
-            dashDirection = transform.TransformDirection(dashDirection);
-        }
+        Vector3 dir = (_xAxis != 0 || _zAxis != 0)
+            ? transform.TransformDirection(new Vector3(_xAxis, 0, _zAxis).normalized)
+            : transform.forward;
 
         float dashSpeed = _dashDistance / _dashDuration;
-        _netRB.Rigidbody.velocity = dashDirection * dashSpeed;
+        _netRB.Rigidbody.velocity = dir * dashSpeed;
     }
 
     private void MovementPlayer()
@@ -193,22 +179,15 @@ public class Player : NetworkBehaviour, IDamageable
             return;
         }
 
-        _netRB.Rigidbody.velocity = transform.forward * _zAxis * _speed * Runner.DeltaTime;
-
-        if (Mathf.Abs(_netRB.Rigidbody.velocity.z) > _speed)
-        {
-            var vel = _netRB.Rigidbody.velocity;
-            vel = Vector3.ClampMagnitude(vel, _speed);
-            _netRB.Rigidbody.velocity = vel;
-        }
+        Vector3 vel = transform.forward * _zAxis * _speed * Runner.DeltaTime;
+        _netRB.Rigidbody.velocity = Vector3.ClampMagnitude(vel, _speed);
     }
 
     private void RotationPlayer()
     {
         if (_xAxis == 0) return;
-        float rotationAmount = _xAxis * _speedRotation * Runner.DeltaTime;
-        Quaternion deltaRotation = Quaternion.Euler(0, rotationAmount, 0);
-        _netRB.Rigidbody.MoveRotation(_netRB.Rigidbody.rotation * deltaRotation);
+        float angle = _xAxis * _speedRotation * Runner.DeltaTime;
+        _netRB.Rigidbody.MoveRotation(_netRB.Rigidbody.rotation * Quaternion.Euler(0, angle, 0));
     }
 
     private void HandleShooting()
@@ -222,6 +201,7 @@ public class Player : NetworkBehaviour, IDamageable
 
     private void SpawnBullet()
     {
+        // Siempre usar Runner.Spawn para que los proyectiles sean NetworkObjects
         if (_doubleShotActive)
         {
             Runner.Spawn(_bulletPrefab, _spawnTransformLeft.position, transform.rotation);
@@ -243,14 +223,10 @@ public class Player : NetworkBehaviour, IDamageable
         }
 
         if (_isInvulnerable && _invulnerabilityTimer.Expired(Runner))
-        {
             _isInvulnerable = false;
-        }
 
         if (_doubleShotTimer.Expired(Runner))
-        {
             _doubleShotActive = false;
-        }
     }
 
     private void ClampPosition()
@@ -283,10 +259,7 @@ public class Player : NetworkBehaviour, IDamageable
         _currentHealth -= damage;
         RPC_BarLife(_currentHealth);
 
-        if (_currentHealth <= 0)
-        {
-            Death();
-        }
+        if (_currentHealth <= 0) Death();
     }
 
     private void Death()
@@ -301,7 +274,8 @@ public class Player : NetworkBehaviour, IDamageable
         _barLife.rectTransform.localScale = new Vector3(health / _maxHealth, 1, 1);
     }
 
-    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+   
+    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
     public void RPC_ActivateDoubleShot(float duration)
     {
         _doubleShotActive = true;
