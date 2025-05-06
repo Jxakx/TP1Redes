@@ -274,10 +274,8 @@ public class Player : NetworkBehaviour, IDamageable
         _barLife.rectTransform.localScale = new Vector3(health / _maxHealth, 1, 1);
     }
 
-    /// <summary>
-    /// El servidor invoca este RPC para activar el double‐shot en todos los clientes.
-    /// </summary>
-    [Rpc(RpcSources.StateAuthority, RpcTargets.All)]
+   
+    [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
     public void RPC_ActivateDoubleShot(float duration)
     {
         _doubleShotActive = true;

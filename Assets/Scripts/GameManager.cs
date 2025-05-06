@@ -45,7 +45,7 @@ public class GameManager : NetworkBehaviour
     {
         if (client == Runner.LocalPlayer)
         {
-            RPC_Lose(client);
+            ShowLose();
         }
 
         _clients.Remove(client);
