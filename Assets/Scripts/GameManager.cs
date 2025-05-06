@@ -9,15 +9,19 @@ public class GameManager : NetworkBehaviour
     public static GameManager Instance { get; private set; }
 
     [SerializeField] private float _boundsWith, _boundsHeight;
-    public Material _alas;
-    public Material _cabina;
+    public Material _alas1;
+    public Material _cabina1;
+
+    public Material _alas2;
+    public Material _cabina2;
 
     [SerializeField] private GameObject _ganar;
     [SerializeField] private GameObject _perder;
 
     [SerializeField] private List<PlayerRef> _clients;
 
-    [SerializeField] public int index = 0;
+    
+
     private void Awake()
     {
         if (Instance == null)

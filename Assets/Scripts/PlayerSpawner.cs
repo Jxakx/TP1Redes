@@ -47,11 +47,10 @@ public class PlayerSpawner : SimulationBehaviour, IPlayerJoined
         //Se debe spawnear el player de cada jugador en la red
         NetworkObject myPlayer = Runner.Spawn(_playerPrefab, spawnPoint.position, spawnPoint.rotation);
 
-        if (GameManager.Instance.index >= 1)
+        if (Runner.SessionInfo.PlayerCount == 2)
         {
-            myPlayer.GetComponent<Player>()._myAlas.material = GameManager.Instance._alas;
-            myPlayer.GetComponent<Player>()._myCamina.material = GameManager.Instance._cabina;
-        }
-        GameManager.Instance.index += 1;
+            myPlayer.GetComponent<Player>()._myAlas.material = GameManager.Instance._alas1;
+            myPlayer.GetComponent<Player>()._myCamina.material = GameManager.Instance._cabina1;
+        };
     }
 }

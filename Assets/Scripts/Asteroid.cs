@@ -10,7 +10,7 @@ public class Asteroid : NetworkBehaviour, IDamageable
     [SerializeField] private float _speedRotationX;
     [SerializeField] private float _speedRotationY;
     [SerializeField] private float _speedRotationZ;
-    [SerializeField] private float _damage;
+    [SerializeField] public float _damage;
     [SerializeField] private float _health;
     [SerializeField] private Vector3 _direction;
 
@@ -42,15 +42,15 @@ public class Asteroid : NetworkBehaviour, IDamageable
         _netRB.Rigidbody.MoveRotation(_netRB.Rigidbody.rotation * deltaRotation);
     }
 
-    private void OnCollisionEnter(Collision collision)
-    {
-        if (!HasStateAuthority) return;
+    //private void OnCollisionEnter(Collision collision)
+    //{
+    //    if (!HasStateAuthority) return;
 
-        if (collision.gameObject.TryGetComponent(out Player enemy))
-        {
-            enemy.RPC_TakeDamage(_damage);
-        }
-    }
+    //    if (collision.gameObject.TryGetComponent(out Player enemy))
+    //    {
+    //        enemy.RPC_TakeDamage(_damage);
+    //    }
+    //}
 
     [Rpc(RpcSources.All, RpcTargets.StateAuthority)]
     public void RPC_TakeDamage(float damage)

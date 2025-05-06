@@ -281,4 +281,13 @@ public class Player : NetworkBehaviour, IDamageable
         _doubleShotActive = true;
         _doubleShotTimer = TickTimer.CreateFromSeconds(Runner, duration);
     }
+
+    private void OnCollisionEnter(Collision collision)
+    {
+        Asteroid myAsteroid = collision.gameObject.GetComponent<Asteroid>();
+        if (myAsteroid != null)
+        {
+            RPC_TakeDamage(myAsteroid._damage);
+        }
+    }
 }

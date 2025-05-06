@@ -53,7 +53,7 @@ MonoBehaviour:
   _speedRotationX: 0
   _speedRotationY: 0
   _speedRotationZ: 0
-  _damage: 40
+  _damage: 30
   _health: 370
   _direction: {x: 0, y: 0, z: 0}
 --- !u!114 &5335765214290284133
